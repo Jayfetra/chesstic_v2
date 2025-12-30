@@ -7,11 +7,6 @@ from app.routes import main_bp
 
 @main_bp.route('/')
 def index():
-    """Render the main page."""
-    return render_template('index.html')
-
-
-@main_bp.route('/analytics')
-def analytics():
-    """Render the analytics page."""
+    """Render the analytics dashboard as the main page."""
     return render_template('analytics.html')
+

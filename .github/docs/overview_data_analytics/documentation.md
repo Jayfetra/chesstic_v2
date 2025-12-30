@@ -3,7 +3,7 @@
 ## Project Changes Log
 
 **Project:** Enhanced Chess Analytics Dashboard  
-**Last Updated:** December 6, 2025
+**Last Updated:** December 30, 2025
 
 ---
 
@@ -1715,4 +1715,96 @@ function renderAISuggestions(suggestions) {
 ---
 
 **End of December 30, 2025 Bug Fixes**
+
+---
+
+## UI Consolidation - December 30, 2025
+
+### Date: December 30, 2025
+
+#### Summary
+Consolidated two separate UIs into one. Made the analytics dashboard (with all 9 sections) the main homepage, removing the need for a separate `/analytics` route.
+
+---
+
+### Changes Made
+
+**1. Route Consolidation (`app/routes/views.py`)**
+**Lines Changed:** 10 lines (removed 7, modified 3)
+
+**Before:**
+```python
+@main_bp.route('/')
+def index():
+    """Render the main page."""
+    return render_template('index.html')
+
+@main_bp.route('/analytics')
+def analytics():
+    """Render the analytics page."""
+    return render_template('analytics.html')
+```
+
+**After:**
+```python
+@main_bp.route('/')
+def index():
+    """Render the analytics dashboard as the main page."""
+    return render_template('analytics.html')
+```
+
+**Changes:**
+- Root route `/` now serves `analytics.html` directly
+- Removed `/analytics` subdirectory route
+- Simplified routing structure
+
+---
+
+**2. Navigation Update (`templates/analytics.html`)**
+**Lines Changed:** 3 lines modified
+
+**Before:**
+```html
+<a href="/">Home</a>
+<a href="/analytics" class="active">Analytics</a>
+```
+
+**After:**
+```html
+<a href="/" class="active">Home</a>
+```
+
+**Changes:**
+- Removed Analytics navigation link (no longer needed)
+- Home link now points to root and is marked as active
+- Cleaner, simpler navigation
+
+---
+
+### Impact
+
+**User Experience:**
+- ✅ Single unified interface at homepage
+- ✅ No need to navigate to subdirectory
+- ✅ All 9 analytics sections immediately accessible at `/`
+- ✅ Simpler, more intuitive user flow
+
+**Technical:**
+- ✅ Simplified routing structure
+- ✅ Reduced code duplication
+- ✅ Single source of truth for analytics UI
+- ✅ Easier to maintain
+
+**Access Points:**
+- **Main page:** `http://localhost:5000/` → Full 9-section analytics dashboard
+- **Old route:** `http://localhost:5000/analytics` → No longer exists (404)
+- **Simple index:** `templates/index.html` → Still exists but not used
+
+---
+
+**Note:** The old `index.html` template file remains in the codebase but is no longer served. It can be removed in a future cleanup if no longer needed.
+
+---
+
+**End of December 30, 2025 UI Consolidation**
 

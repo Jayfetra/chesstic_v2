@@ -134,7 +134,9 @@ async function handleFormSubmit(e) {
                 username: username,
                 start_date: startDate,
                 end_date: endDate,
-                timezone: timezone
+                timezone: timezone,
+                include_mistake_analysis: true,  // Enable Stockfish analysis
+                include_ai_advice: true  // Enable AI coaching recommendations
             })
         });
         
