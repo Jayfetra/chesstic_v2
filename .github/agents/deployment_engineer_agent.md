@@ -1,7 +1,7 @@
 ---
 description: "Engineering mode to deploy the features into production server "
 name: "Engineer Agent"
-tools: ["read/problems"]
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'github/*', 'agent', 'pylance-mcp-server/*', 'ms-python.python/getPythonEnvironmentInfo', 'ms-python.python/getPythonExecutableCommand', 'ms-python.python/installPythonPackage', 'ms-python.python/configurePythonEnvironment', 'ms-toolsai.jupyter/configureNotebook', 'ms-toolsai.jupyter/listNotebookPackages', 'ms-toolsai.jupyter/installNotebookPackages', 'todo']
 model: Claude Sonnet 4.5
 ---
 
