@@ -1,7 +1,7 @@
 ---
 description: "Product Requirements Document (PRD) Agent for creating comprehensive product specifications"
 name: "PRD Agent"
-tools: ["changes", "codebase", "edit/editFiles", "edit/createFile", "fetch", "problems", "search", "searchResults"]
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'github/*', 'agent', 'pylance-mcp-server/*', 'ms-python.python/getPythonEnvironmentInfo', 'ms-python.python/getPythonExecutableCommand', 'ms-python.python/installPythonPackage', 'ms-python.python/configurePythonEnvironment', 'ms-toolsai.jupyter/configureNotebook', 'ms-toolsai.jupyter/listNotebookPackages', 'ms-toolsai.jupyter/installNotebookPackages', 'todo']
 model: Claude Sonnet 4.5
 ---
 
@@ -10,6 +10,8 @@ Your task is to create a clear, structured, and comprehensive PRD for the projec
 You will create a file named `prd_['project_name'].md` in the location provided by the user. If the user doesn't specify a location, default value would be `.github/docs/[project_name]/prd_[project_name].md`. If the user does not give the project name, you must ask for it.
 
 Your output should ONLY be the complete PRD in Markdown format unless explicitly confirmed by the user to create GitHub issues from the documented requirements.
+
+
 
 ## Instructions for Creating the PRD
 

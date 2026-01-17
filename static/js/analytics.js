@@ -29,6 +29,14 @@ function initializeDashboard() {
         btn.addEventListener('click', handleDatePreset);
     });
 
+    // PRD v2.2: Add real-time date range validation
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', validateDateRange);
+        endDateInput.addEventListener('change', validateDateRange);
+    }
+
     // Auto-detect and set timezone
     detectAndSetTimezone();
 
@@ -84,6 +92,58 @@ function handleDatePreset(e) {
     
     document.getElementById('endDate').valueAsDate = today;
     document.getElementById('startDate').valueAsDate = startDate;
+    
+    // PRD v2.2: Validate after preset selection
+    validateDateRange();
+}
+
+// PRD v2.2: Validate date range (30-day maximum)
+function validateDateRange() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const errorDiv = document.getElementById('dateRangeError');
+    const submitBtn = document.getElementById('analyzeBtn');
+    
+    if (!startDate || !endDate) {
+        errorDiv.style.display = 'none';
+        submitBtn.disabled = false;
+        return true;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    
+    // Check if start is after end
+    if (start > end) {
+        errorDiv.textContent = 'Start date must be before end date';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = true;
+        return false;
+    }
+    
+    // Check if end date is in the future
+    if (end > today) {
+        errorDiv.textContent = 'End date cannot be in the future';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = true;
+        return false;
+    }
+    
+    // Check if range exceeds 30 days
+    const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    if (daysDiff > 30) {
+        errorDiv.textContent = "Please select a date range of 30 days or less. For best results, use 'Last 7 days' or 'Last 30 days'.";
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = true;
+        return false;
+    }
+    
+    // Valid range
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = false;
+    return true;
 }
 
 // Form Submission Handler
@@ -94,6 +154,11 @@ async function handleFormSubmit(e) {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     let timezone = document.getElementById('timezone').value;
+    
+    // PRD v2.2: Validate date range before submission
+    if (!validateDateRange()) {
+        return;
+    }
     
     // Validate dates
     if (new Date(startDate) > new Date(endDate)) {
@@ -693,35 +758,22 @@ function renderTerminationLegend(elementId, data) {
 async function renderOpeningPerformance(data) {
     if (!data) return;
     
-    if (data.best_openings && data.best_openings.length > 0) {
-        // PRD v2.1: Dynamically set title with count
-        const bestCount = data.best_openings.length;
-        const bestTitle = document.getElementById('bestOpeningsTitle');
-        if (bestTitle) {
-            bestTitle.textContent = `🏆 Top ${bestCount > 1 ? bestCount : ''} Best Opening${bestCount > 1 ? 's' : ''}`;
+    // PRD v2.2: Render top 10 most common openings (frequency-based)
+    if (data.top_common_openings && data.top_common_openings.length > 0) {
+        const count = data.top_common_openings.length;
+        const title = document.getElementById('commonOpeningsTitle');
+        if (title) {
+            title.textContent = `📊 Top ${count} Most Common Opening${count > 1 ? 's' : ''}`;
         }
         
-        renderOpeningsChart('bestOpeningsChart', data.best_openings, true);
-        renderOpeningsTable('bestOpeningsTable', data.best_openings);
-    }
-    
-    if (data.worst_openings && data.worst_openings.length > 0) {
-        // PRD v2.1: Dynamically set title with count
-        const worstCount = data.worst_openings.length;
-        const worstTitle = document.getElementById('worstOpeningsTitle');
-        if (worstTitle) {
-            worstTitle.textContent = `⚠️ Top ${worstCount > 1 ? worstCount : ''} Worst Opening${worstCount > 1 ? 's' : ''}`;
-        }
-        
-        renderOpeningsChart('worstOpeningsChart', data.worst_openings, false);
-        renderOpeningsTable('worstOpeningsTable', data.worst_openings);
+        renderCommonOpeningsChart('commonOpeningsChart', data.top_common_openings);
+        renderCommonOpeningsTable('commonOpeningsTable', data.top_common_openings);
     }
 }
 
-function renderOpeningsChart(canvasId, openings, isBest) {
+function renderCommonOpeningsChart(canvasId, openings) {
     const labels = openings.map(o => o.name);
-    const winRates = openings.map(o => o.win_rate);
-    const color = isBest ? '#27ae60' : '#e74c3c';
+    const gamesPlayed = openings.map(o => o.games);
     
     const ctx = document.getElementById(canvasId);
     charts[canvasId] = new Chart(ctx, {
@@ -729,9 +781,9 @@ function renderOpeningsChart(canvasId, openings, isBest) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Win Rate %',
-                data: winRates,
-                backgroundColor: color
+                label: 'Games Played',
+                data: gamesPlayed,
+                backgroundColor: '#3498db'
             }]
         },
         options: {
@@ -746,10 +798,9 @@ function renderOpeningsChart(canvasId, openings, isBest) {
             scales: {
                 x: {
                     beginAtZero: true,
-                    max: 100,
                     title: {
                         display: true,
-                        text: 'Win Rate %'
+                        text: 'Games Played'
                     }
                 }
             }
@@ -757,20 +808,14 @@ function renderOpeningsChart(canvasId, openings, isBest) {
     });
 }
 
-function renderOpeningsTable(elementId, openings) {
+function renderCommonOpeningsTable(elementId, openings) {
     const element = document.getElementById(elementId);
     let html = '';
     
     openings.forEach(opening => {
-        // PRD v2.1: Display first 6 moves if available
-        const movesHtml = opening.first_six_moves 
-            ? `<div class="opening-moves">📝 ${opening.first_six_moves}</div>`
-            : '';
-        
         html += `
             <div class="opening-row">
                 <div class="opening-name">${opening.name}</div>
-                ${movesHtml}
                 <div class="opening-games">${opening.games} games</div>
                 <div class="opening-stats">
                     <div class="opening-stat">

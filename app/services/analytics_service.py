@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class AnalyticsService:
     """Service for advanced chess analytics calculations."""
     
-    def __init__(self, stockfish_path: str = 'stockfish', engine_depth: int = 15,
+    def __init__(self, stockfish_path: str = 'stockfish', engine_depth: int = 12,
                  engine_enabled: bool = True, openai_api_key: str = '',
                  openai_model: str = 'gpt-4o-mini'):
         """
@@ -31,7 +31,7 @@ class AnalyticsService:
         
         Args:
             stockfish_path: Path to Stockfish executable
-            engine_depth: Engine analysis depth
+            engine_depth: Engine analysis depth (default: 12 in PRD v2.2)
             engine_enabled: Whether to enable engine analysis
             openai_api_key: OpenAI API key for AI advisor
             openai_model: OpenAI model to use
@@ -553,11 +553,11 @@ class AnalyticsService:
     def _analyze_opening_performance(self, games: List[Dict]) -> Dict:
         """
         Analyze performance by chess opening.
-        PRD v2.1: Includes first 6 moves in standard chess notation.
+        PRD v2.2: Changed to frequency-based analysis (top 10 most common openings).
+        Removed best/worst categorization, 3-game minimum, and move sequence display.
         """
         opening_stats = defaultdict(lambda: {
-            'wins': 0, 'losses': 0, 'draws': 0, 'games': 0, 
-            'pgns': []  # Store PGNs to extract moves later
+            'wins': 0, 'losses': 0, 'draws': 0, 'games': 0
         })
         
         for game in games:
@@ -567,7 +567,6 @@ class AnalyticsService:
             
             result = game['result']
             opening_stats[opening]['games'] += 1
-            opening_stats[opening]['pgns'].append(game.get('pgn', ''))
             
             if result == 'win':
                 opening_stats[opening]['wins'] += 1
@@ -576,36 +575,29 @@ class AnalyticsService:
             else:
                 opening_stats[opening]['draws'] += 1
         
-        # Filter openings with 3+ games and calculate win rates
-        qualified_openings = []
+        # PRD v2.2: Get all openings and sort by frequency (games played)
+        all_openings = []
         for opening, stats in opening_stats.items():
-            if stats['games'] >= 3:
-                total = stats['games']
-                win_rate = (stats['wins'] / total * 100) if total > 0 else 0
-                
-                # PRD v2.1: Extract first 6 moves from most recent game
-                first_six_moves = self._extract_first_six_moves(stats['pgns'][0]) if stats['pgns'] else ''
-                
-                qualified_openings.append({
-                    'name': opening,
-                    'games': stats['games'],
-                    'wins': stats['wins'],
-                    'losses': stats['losses'],
-                    'draws': stats['draws'],
-                    'win_rate': round(win_rate, 2),
-                    'first_six_moves': first_six_moves  # PRD v2.1
-                })
+            total = stats['games']
+            win_rate = (stats['wins'] / total * 100) if total > 0 else 0
+            
+            all_openings.append({
+                'name': opening,
+                'games': stats['games'],
+                'wins': stats['wins'],
+                'losses': stats['losses'],
+                'draws': stats['draws'],
+                'win_rate': round(win_rate, 2)
+            })
         
-        # Sort by win rate
-        qualified_openings.sort(key=lambda x: x['win_rate'], reverse=True)
+        # Sort by frequency (most played first)
+        all_openings.sort(key=lambda x: x['games'], reverse=True)
         
-        # Get top 5 and bottom 5
-        best_openings = qualified_openings[:5]
-        worst_openings = qualified_openings[-5:][::-1]  # Reverse to show worst first
+        # Return top 10 most common openings
+        top_common_openings = all_openings[:10]
         
         return {
-            'best_openings': best_openings,
-            'worst_openings': worst_openings
+            'top_common_openings': top_common_openings
         }
     
     def _extract_first_six_moves(self, pgn_string: str) -> str:

@@ -6,7 +6,7 @@ import requests
 from app.routes import api_bp
 from app.services.chess_service import ChessService
 from app.services.analytics_service import AnalyticsService
-from app.utils.validators import validate_username, validate_date_range, validate_timezone
+from app.utils.validators import validate_username, validate_date_range, validate_timezone, get_date_range_error
 import logging
 
 logger = logging.getLogger(__name__)
@@ -116,10 +116,13 @@ def analyze_detailed():
                 'status': 'error'
             }), 400
         
-        if not validate_date_range(start_date, end_date):
+        # PRD v2.2: Check for specific date range errors (30-day max)
+        date_error = get_date_range_error(start_date, end_date)
+        if date_error:
             return jsonify({
-                'error': 'Invalid date range. Dates must be in YYYY-MM-DD format, start must be before end, maximum 1 year range, and dates cannot be in the future',
-                'status': 'error'
+                'error': date_error,
+                'status': 'error',
+                'error_code': 'date_range_exceeded' if '30 days' in date_error else 'invalid_date_range'
             }), 400
         
         # Validate timezone

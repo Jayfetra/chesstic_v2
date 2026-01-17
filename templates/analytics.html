@@ -88,9 +88,13 @@
                         <label>Quick Presets:</label>
                         <button type="button" class="btn-preset" data-days="7">Last 7 Days</button>
                         <button type="button" class="btn-preset" data-days="30">Last 30 Days</button>
-                        <button type="button" class="btn-preset" data-days="90">Last 3 Months</button>
-                        <button type="button" class="btn-preset" data-days="180">Last 6 Months</button>
                     </div>
+
+                    <div class="date-range-info">
+                        <small>Maximum 30 days for optimal performance (&lt;1 minute analysis)</small>
+                    </div>
+
+                    <div id="dateRangeError" class="date-range-error" style="display: none;"></div>
 
                     <button type="submit" class="btn-analyze" id="analyzeBtn">
                         <span class="btn-text">Analyze Performance</span>
@@ -240,22 +244,15 @@
                 <div class="section-card">
                     <div class="section-header">
                         <h3>♟️ Opening Performance</h3>
-                        <p class="section-description">Your strongest and weakest openings</p>
+                        <p class="section-description">Your most frequently played openings</p>
                     </div>
                     <div class="opening-content">
                         <div class="opening-section">
-                            <h4 class="opening-subtitle" id="bestOpeningsTitle">🏆 Top Best Openings</h4>
+                            <h4 class="opening-subtitle" id="commonOpeningsTitle">📊 Top Most Common Openings</h4>
                             <div class="chart-container">
-                                <canvas id="bestOpeningsChart"></canvas>
+                                <canvas id="commonOpeningsChart"></canvas>
                             </div>
-                            <div class="opening-table" id="bestOpeningsTable"></div>
-                        </div>
-                        <div class="opening-section">
-                            <h4 class="opening-subtitle" id="worstOpeningsTitle">⚠️ Top Worst Openings</h4>
-                            <div class="chart-container">
-                                <canvas id="worstOpeningsChart"></canvas>
-                            </div>
-                            <div class="opening-table" id="worstOpeningsTable"></div>
+                            <div class="opening-table" id="commonOpeningsTable"></div>
                         </div>
                     </div>
                 </div>

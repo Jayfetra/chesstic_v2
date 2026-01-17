@@ -432,6 +432,29 @@ body {
     color: var(--white);
 }
 
+/* PRD v2.2: Date Range Info and Error */
+.date-range-info {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.date-range-info small {
+    color: var(--dark-gray);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.date-range-error {
+    background-color: #fee;
+    border: 1px solid var(--danger-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--danger-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
 /* Analyze Button */
 .btn-analyze {
     display: flex;

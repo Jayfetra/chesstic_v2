@@ -26,15 +26,18 @@ class MistakeAnalysisService:
     MISTAKE_THRESHOLD = 100
     BLUNDER_THRESHOLD = 200
     
-    def __init__(self, stockfish_path: str = 'stockfish', engine_depth: int = 15, 
-                 time_limit: float = 2.0, enabled: bool = True):
+    # PRD v2.2: Early stop threshold for obvious blunders (>500 CP)
+    EARLY_STOP_THRESHOLD = 500
+    
+    def __init__(self, stockfish_path: str = 'stockfish', engine_depth: int = 12, 
+                 time_limit: float = 1.5, enabled: bool = True):
         """
         Initialize mistake analysis service.
         
         Args:
             stockfish_path: Path to Stockfish executable
-            engine_depth: Analysis depth (default: 15)
-            time_limit: Time limit per position in seconds (default: 2.0)
+            engine_depth: Analysis depth (default: 12, optimized for speed in v2.2)
+            time_limit: Time limit per position in seconds (default: 1.5s in v2.2)
             enabled: Whether engine analysis is enabled
         """
         self.stockfish_path = stockfish_path
@@ -217,6 +220,21 @@ class MistakeAnalysisService:
                     if current_eval is not None and new_eval is not None:
                         cp_loss = current_eval - new_eval
                         
+                        # PRD v2.2: Early stop for obvious blunders (>500 CP)
+                        if cp_loss >= self.EARLY_STOP_THRESHOLD:
+                            # Record as blunder and continue without detailed analysis
+                            mistakes[stage]['cp_losses'].append(cp_loss)
+                            mistakes[stage]['blunders'] += 1
+                            
+                            if mistakes[stage]['worst_mistake'] is None or \
+                               cp_loss > mistakes[stage]['worst_mistake']['cp_loss']:
+                                mistakes[stage]['worst_mistake'] = {
+                                    'move_number': move_number,
+                                    'cp_loss': cp_loss,
+                                    'type': 'blunder'
+                                }
+                            continue
+                        
                         # Only count if it's a significant loss
                         if cp_loss > 0:
                             mistake_type = self._classify_mistake(cp_loss)
@@ -246,6 +264,7 @@ class MistakeAnalysisService:
     def aggregate_mistake_analysis(self, games_data: List[Dict], username: str) -> Dict:
         """
         Aggregate mistake analysis across all games.
+        PRD v2.2: Analyzes exactly 2 games (evenly distributed across time period) for 1-minute performance target.
         PRD v2.1: Critical mistake links now only show games player lost by resignation.
         
         Args:
@@ -297,14 +316,29 @@ class MistakeAnalysisService:
                 'worst_game': None,
                 'avg_cp_loss': 0,
                 'critical_mistake_game': None
+            },
+            'sample_info': {
+                'total_games': len(games_data),
+                'analyzed_games': 0,
+                'sample_percentage': 0
             }
         }
         
         username_lower = username.lower()
         
+        # PRD v2.2: Sample exactly 2 games, distributed across time period
+        games_to_analyze = self._select_games_for_analysis(games_data, max_games=2)
+        aggregated['sample_info']['analyzed_games'] = len(games_to_analyze)
+        if len(games_data) > 0:
+            aggregated['sample_info']['sample_percentage'] = round(
+                (len(games_to_analyze) / len(games_data)) * 100, 1
+            )
+        
+        logger.info(f"PRD v2.2: Analyzing {len(games_to_analyze)} games out of {len(games_data)} total games")
+        
         try:
-            # Analyze each game
-            for idx, game_data in enumerate(games_data):
+            # Analyze selected games
+            for idx, game_data in enumerate(games_to_analyze):
                 # Determine player color
                 white_username = game_data.get('white', {}).get('username', '').lower()
                 black_username = game_data.get('black', {}).get('username', '').lower()
@@ -417,8 +451,41 @@ class MistakeAnalysisService:
         
         return aggregated
     
+    def _select_games_for_analysis(self, games_data: List[Dict], max_games: int = 2) -> List[Dict]:
+        """
+        Select games for analysis using time-distributed sampling.
+        PRD v2.2: Pick exactly max_games (default 2) evenly distributed across the time period.
+        
+        Args:
+            games_data: List of game dictionaries
+            max_games: Maximum number of games to analyze (default: 2)
+            
+        Returns:
+            List of selected games for analysis
+        """
+        if not games_data:
+            return []
+        
+        total_games = len(games_data)
+        
+        # If we have fewer games than max_games, analyze all
+        if total_games <= max_games:
+            return games_data
+        
+        # Select games evenly distributed across the list (time-distributed)
+        # Games are already sorted by date from Chess.com API
+        selected_games = []
+        interval = total_games / max_games
+        
+        for i in range(max_games):
+            index = int(i * interval)
+            if index < total_games:
+                selected_games.append(games_data[index])
+        
+        return selected_games
+    
     def _empty_aggregation(self) -> Dict:
-        """Return empty aggregation structure (PRD v2.1: includes critical_mistake_game field)."""
+        """Return empty aggregation structure (PRD v2.2: includes sample_info)."""
         return {
             'early': {
                 'total_moves': 0, 'inaccuracies': 0, 'mistakes': 0, 'blunders': 0,
@@ -434,6 +501,11 @@ class MistakeAnalysisService:
                 'total_moves': 0, 'inaccuracies': 0, 'mistakes': 0, 'blunders': 0,
                 'missed_opps': 0, 'cp_losses': [], 'worst_game': None, 'avg_cp_loss': 0,
                 'critical_mistake_game': None
+            },
+            'sample_info': {
+                'total_games': 0,
+                'analyzed_games': 0,
+                'sample_percentage': 0
             }
         }
     
