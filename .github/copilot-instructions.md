@@ -23,6 +23,7 @@ Flask-based chess analytics website that pulls data from Chess.com API. Users en
 
 ## Github Repository & Upload rule
 - Repo address: https://github.com/Jayfetra/chesstic_v2
+- Default branch: **main** (use this for all development)
 - No need to push the issue, you can always commit and push the file into github repo
 - Secrets will be saved in .env on local machine, do not push .env to github
 

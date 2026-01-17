@@ -2,7 +2,7 @@
 
 ## Server Information
 - **Server IP**: 159.65.140.136
-- **GitHub Repository**: https://github.com/Jayfetra/chesstic_v2/tree/master
+- **GitHub Repository**: https://github.com/Jayfetra/chesstic_v2/tree/main
 
 ---
 
@@ -413,7 +413,7 @@ sudo -u chesstic bash
 cd /opt/chesstic/app
 
 # Pull latest code
-git pull origin master
+git pull origin main
 
 # Install/update dependencies
 uv sync
