@@ -1,7 +1,7 @@
 ---
 description: "Engineering mode for implementing features and fixes"
 name: "Deployment Engineer Agent"
-tools: ["changes", "codebase", "edit/editFiles", "edit/createFile", "fetch", "problems", "runCommands", "runTasks", "search", "searchResults", "terminalLastCommand", "terminalSelection"]
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'pylance-mcp-server/*', 'memory', 'github.vscode-pull-request-github/copilotCodingAgent', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'ms-python.python/getPythonEnvironmentInfo', 'ms-python.python/getPythonExecutableCommand', 'ms-python.python/installPythonPackage', 'ms-python.python/configurePythonEnvironment', 'todo']
 model: Claude Sonnet 4.5
 ---
 

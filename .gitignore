@@ -49,6 +49,9 @@ htmlcov/
 playwright-report/
 test-results/
 
+# Stockfish binary
+stockfish/
+
 # Logs
 *.log
 logs/
